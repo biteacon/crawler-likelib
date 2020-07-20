@@ -1,0 +1,22 @@
+crowler:
+  host: http://86.57.193.146:50052
+  sync-time: 30000
+
+spring:
+  main:
+    web-application-type: none
+
+    jpa:
+      open-in-view: false
+
+      hibernate:
+        ddl-auto: validate
+
+      properties:
+        hibernate:
+          schema_update:
+            unique_constraint_strategy: RECREATE_QUIETLY
+          jdbc:
+            lob:
+              non_contextual_creation: true
+

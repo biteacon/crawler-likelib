@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql:indexed_likelib
+    username: postgres
+    password: postgres
+
+  flyway:
+    encoding: UTF-8
+    baseline-on-migrate: true

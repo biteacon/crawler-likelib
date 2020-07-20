@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql:block_info_db
+    username: postgres
+    password: postgres
+
+  flyway:
+    encoding: UTF-8
+    baseline-on-migrate: false
