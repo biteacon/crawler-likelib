@@ -20,11 +20,11 @@ import java.util.Set;
 public class Block {
 
     @Id
-    @Column
+    @Column (name = "height", unique = true)
     @NonNull
     private Long height;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coinbase")
     @NonNull
     private Account coinbase;
@@ -68,6 +68,14 @@ public class Block {
 
     public void setCoinbase(@NonNull Account coinbase) {
         this.coinbase = coinbase;
+    }
+
+    public String getCoinbaseString() {
+        return coinbaseString;
+    }
+
+    public void setCoinbaseString(String coinbaseString) {
+        this.coinbaseString = coinbaseString;
     }
 
     @NonNull
@@ -120,13 +128,5 @@ public class Block {
 
     public void setTransactionsInJSON(String transactionsInJSON) {
         this.transactionsInJSON = transactionsInJSON;
-    }
-
-    public String getCoinbaseString() {
-        return coinbaseString;
-    }
-
-    public void setCoinbaseString(String coinbaseString) {
-        this.coinbaseString = coinbaseString;
     }
 }

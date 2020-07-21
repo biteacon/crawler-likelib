@@ -10,8 +10,10 @@ import com.hackathon.crawler.data.entities.Transaction;
 import com.hackathon.crawler.data.repository.AccountRepository;
 import com.hackathon.crawler.data.repository.BlockRepository;
 import com.hackathon.crawler.data.repository.TransactionRepository;
-import com.hackathon.crawler.processor.receivers.IDataReceiver;
-import org.springframework.stereotype.Component;
+import com.hackathon.crawler.processor.exceptions.ErrorCode;
+import com.hackathon.crawler.processor.exceptions.ProcessException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -20,73 +22,89 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
-@Component
-public class BlockBuilder {
+@Service
+public class DataBuilder {
 
-    private final IDataReceiver dataReceiver;
+    private final DataReceiver dataReceiver;
     private final BlockRepository blockRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final TransactionCache transactionCache;
+    private final Statistic statistic;
 
-    public BlockBuilder(IDataReceiver dataReceiver,
-                        BlockRepository blockRepository,
-                        AccountRepository accountRepository,
-                        TransactionRepository transactionRepository) {
+    public DataBuilder(DataReceiver dataReceiver,
+                       BlockRepository blockRepository,
+                       AccountRepository accountRepository,
+                       TransactionRepository transactionRepository,
+                       TransactionCache transactionCache,
+                       Statistic statistic) {
         this.dataReceiver = dataReceiver;
         this.blockRepository = blockRepository;
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.transactionCache = transactionCache;
+        this.statistic = statistic;
     }
 
-    public Block buildBlock(String hash) {
+    @Transactional
+    public String buildBlock(String json, boolean isTopHeight, String hashIsTopHeight) {
 
-        Block block = blockFromJSON(dataReceiver.getBlockDataByHash(hash));
-        block.setHash(hash);
+        long startBuildingData = System.currentTimeMillis();
+        Block block = blockFromJSON(json);
+        String nextBlockJSON = "";
+        if (isTopHeight) {
+            block.setHash(hashIsTopHeight);
+        } else {
+            nextBlockJSON = dataReceiver.getBlockDataByNumber(block.getHeight() + 1);
+            Block nextBlock = blockFromJSON(nextBlockJSON);
+            block.setHash(nextBlock.getPrevBlockHash());
+        }
 
         Account coinbaseAccount = accountFromJSON(dataReceiver.getAccountData(block.getCoinbaseString()));
 
-        block.setCoinbase(accountRepository.save(coinbaseAccount));//
+        block.setCoinbase(saveAccountIfNotExist(coinbaseAccount));
 
         Set<Transaction> transactionSet = getTransactionSetFromJSON(block.getTransactionsInJSON());
 
-        for (Transaction transaction : transactionSet) {
-            Account accountTo = accountFromJSON(dataReceiver.getAccountData(transaction.getAccountToString()));
-            Account accountFrom = accountFromJSON(dataReceiver.getAccountData(transaction.getAccountFromString()));
+        for (Transaction blockTransaction : transactionSet) {
+            Account accountTo = accountFromJSON(dataReceiver.getAccountData(blockTransaction.getAccountToString()));
+            Account accountFrom = accountFromJSON(dataReceiver.getAccountData(blockTransaction.getAccountFromString()));
 
-            transaction.setAccountTo(accountRepository.save(accountTo));
-            transaction.setAccountFrom(accountRepository.save(accountFrom));
+            blockTransaction.setAccountTo(updateAccountIfExist(accountTo));
+            blockTransaction.setAccountFrom(updateAccountIfExist(accountFrom));
 
-            for (String currentTxHash : accountTo.getTransactionsHashesInString()) {
-                Transaction currentTransaction = getTransactionFromJSON(dataReceiver.getTransactionData(currentTxHash));
-
-                if (transactionSet.contains(currentTransaction)) {
-                    String transactionStatusJSON = dataReceiver.getTransactionStatusData(currentTxHash);
-                    writeExtraValuesToTransaction(transaction, currentTxHash, transactionStatusJSON);
-                }
-            }
-
-            for (String currentTxHash : accountFrom.getTransactionsHashesInString()) {
-                Transaction currentTransaction = getTransactionFromJSON(dataReceiver.getTransactionData(currentTxHash));
-
-                if (transactionSet.contains(currentTransaction)) {
-                    String transactionStatusJSON = dataReceiver.getTransactionStatusData(currentTxHash);
-                    writeExtraValuesToTransaction(transaction, currentTxHash, transactionStatusJSON);
-                }
-            }
+            findTransactionsOfBlock(transactionSet, blockTransaction, accountTo.getTransactionsHashesInString());
+            findTransactionsOfBlock(transactionSet, blockTransaction, accountFrom.getTransactionsHashesInString());
         }
 
-        Block b = blockRepository.save(block);
+        Block resultBlock = blockRepository.save(block);
+        statistic.setBlockCountInc();
 
         for (Transaction tx : transactionSet) {
-            tx.setBlock(b);
+            if (tx.getHash() == null) {
+                tx.setHash("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB=");
+                tx.setStatus("Success");
+                tx.setFeeLeft(0L);
+                tx.setType("Transfer");
+                tx.setMessage("");
+            }
+            tx.setBlock(resultBlock);
+            statistic.setTxCountInc();
         }
 
         transactionRepository.saveAll(transactionSet);
 
-        //block.setTransactionList(transactionSet);
+        block.setTransactionList(transactionSet);
 
+        long finishBuildingData = System.currentTimeMillis();
+        float durationBuilding = (float) (finishBuildingData - startBuildingData)/1000;
+        String formattedDurationTime = String.format("%.2f", durationBuilding);
+        System.out.println("Received block with hash: " + block.getHash()
+                + " and height: " + block.getHeight() + " | Duration: " + formattedDurationTime + " sec");
 
-        return block;
+        if (isTopHeight)
+            return json;
+        else return nextBlockJSON;
     }
 
     private Block blockFromJSON(String json) {
@@ -103,7 +121,7 @@ public class BlockBuilder {
             block.setTransactionsInJSON(node.get("transactions").toString());
 
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("");
+            throw new ProcessException(ErrorCode.PARSE_EXCEPTION, "Can`t parse JSON to block");
         }
 
         return block;
@@ -128,7 +146,7 @@ public class BlockBuilder {
             account.setTransactionsHashesInString(transactionHashSet);
 
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new ProcessException(ErrorCode.PARSE_EXCEPTION, "Can`t parse JSON to account.");
         }
 
         return account;
@@ -144,7 +162,7 @@ public class BlockBuilder {
                 transactionSet.add(transaction);
             }
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            throw new ProcessException(ErrorCode.PARSE_EXCEPTION, "Can`t parse JSON to set of transactions.");
         }
         return transactionSet;
     }
@@ -165,7 +183,7 @@ public class BlockBuilder {
             transaction.setFee(node.get("fee").asLong());
 
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            throw new ProcessException(ErrorCode.PARSE_EXCEPTION, "Can`t parse JSON to transactions.");
         }
 
         return transaction;
@@ -182,7 +200,53 @@ public class BlockBuilder {
             transaction.setStatus(chooseTransactionStatus(node.get("status_code").asInt()));
             transaction.setFeeLeft(node.get("fee_left").asLong());
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            throw new ProcessException(ErrorCode.PARSE_EXCEPTION, "Can`t parse JSON to status of transactions.");
+        }
+    }
+
+    private Account saveAccountIfNotExist(Account account) {
+
+        if (accountRepository.existsByAddress(account.getAddress())) {
+            return account;
+        } else {
+            return accountRepository.save(account);
+        }
+    }
+
+    private Account updateAccountIfExist(Account account) {
+        if (accountRepository.existsByAddress(account.getAddress())) {
+
+            Account addressFromDb = accountRepository.findById(account.getAddress()).orElseThrow(
+                    () -> new ProcessException(ErrorCode.PROCESS_EXCEPTION, "Can`t find address"));
+
+            addressFromDb.setBalance(account.getBalance());
+            addressFromDb.setNonce(account.getNonce());
+
+            return accountRepository.save(addressFromDb);
+        } else {
+            return accountRepository.save(account);
+        }
+    }
+
+    private void findTransactionsOfBlock(Set<Transaction> transactionSet,
+                                                Transaction blockTransaction,
+                                                Set<String> transactionHashes) {
+        for (String currentTxHash : transactionHashes) {
+            Transaction currentTransaction;
+            if (transactionCache.isContainTransactionByHash(currentTxHash)) {
+                currentTransaction = transactionCache.getTransactionByHash(currentTxHash);
+            } else {
+                currentTransaction = getTransactionFromJSON(dataReceiver.getTransactionData(currentTxHash));
+                String transactionStatusJSON = dataReceiver.getTransactionStatusData(currentTxHash);
+                writeExtraValuesToTransaction(currentTransaction, currentTxHash, transactionStatusJSON);
+                transactionCache.putTransaction(currentTransaction);
+                statistic.setTxInCacheInc();
+            }
+
+            if (transactionSet.contains(currentTransaction)) {
+                String transactionStatusJSON = dataReceiver.getTransactionStatusData(currentTxHash);
+                writeExtraValuesToTransaction(blockTransaction, currentTxHash, transactionStatusJSON);
+            }
         }
     }
 

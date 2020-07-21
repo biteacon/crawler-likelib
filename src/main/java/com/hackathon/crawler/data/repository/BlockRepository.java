@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 public interface BlockRepository extends JpaRepository<Block, String> {
 
     @Query("SELECT max(b.height) FROM Block b")
-    Long getMaxValueOfNumber();
+    Long getTopBlockNumber();
 
     Boolean existsByHeight(Long height);
 

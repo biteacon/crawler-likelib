@@ -4,9 +4,10 @@ import org.springframework.lang.NonNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.math.BigInteger;
@@ -17,7 +18,7 @@ import java.util.Set;
 public class Account {
 
     @Id
-    @Column
+    @Column(unique = true)
     @NonNull
     private String address;
 
@@ -33,8 +34,7 @@ public class Account {
     @NonNull
     private String type;
 
-    @OneToOne
-    @PrimaryKeyJoinColumn
+    @OneToOne(mappedBy = "coinbase", fetch = FetchType.LAZY)
     private Block block;
 
     @Transient
