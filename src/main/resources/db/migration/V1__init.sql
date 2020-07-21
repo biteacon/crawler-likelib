@@ -5,14 +5,14 @@ CREATE TABLE likelib.account_types (
 CREATE TABLE likelib.accounts (
     address character varying(255) NOT NULL,
     balance bigint NOT NULL,
-    nonce double precision NOT NULL,
+    nonce numeric NOT NULL,
     type character varying(255) NOT NULL
 );
 CREATE TABLE likelib.blocks (
     height bigint NOT NULL,
     hash character varying(255) NOT NULL,
     "timestamp" timestamp without time zone NOT NULL,
-    nonce double precision NOT NULL,
+    nonce numeric NOT NULL,
     prev_block_hash character varying(255) NOT NULL,
     coinbase character varying(255) NOT NULL
 );
