@@ -1,17 +1,12 @@
 package com.hackathon.crawler.data.repository;
 
+import com.hackathon.crawler.data.entities.Account;
 import com.hackathon.crawler.data.entities.Block;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface BlockRepository extends JpaRepository<Block, String> {
-
-    @Query("SELECT max(b.height) FROM Block b")
-    Long getMaxValueOfNumber();
-
-    Boolean existsByHeight(Long height);
-
+public interface AccountRepository extends JpaRepository<Account, String> {
 
 }

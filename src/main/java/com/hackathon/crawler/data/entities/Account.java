@@ -1,86 +1,94 @@
 package com.hackathon.crawler.data.entities;
 
+import org.springframework.lang.NonNull;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Index;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
-import java.util.Objects;
+import javax.persistence.Transient;
+import java.math.BigInteger;
+import java.util.Set;
 
 @Entity
-@Table(name = "accounts")
+@Table(name = "accounts", schema = "likelib")
 public class Account {
 
     @Id
-    @Column(name = "address")
+    @Column
+    @NonNull
     private String address;
 
-    @Column(name = "address_in_base58")
-    private String addressInBase58;
-
     @Column
+    @NonNull
     private Long balance;
 
     @Column
-    private Integer nonce;
+    @NonNull
+    private BigInteger nonce;
 
-
+    @Column
+    @NonNull
     private String type;
 
+    @OneToOne
+    @PrimaryKeyJoinColumn
+    private Block block;
+
+    @Transient
+    private Set<String> transactionsHashesInString;
+
+    @NonNull
     public String getAddress() {
         return address;
     }
 
-    public void setAddress(String address) {
+    public void setAddress(@NonNull String address) {
         this.address = address;
     }
 
-    public String getAddressInBase58() {
-        return addressInBase58;
-    }
-
-    public void setAddressInBase58(String addressInBase58) {
-        this.addressInBase58 = addressInBase58;
-    }
-
+    @NonNull
     public Long getBalance() {
         return balance;
     }
 
-    public void setBalance(Long balance) {
+    public void setBalance(@NonNull Long balance) {
         this.balance = balance;
     }
 
-    public Integer getNonce() {
+    @NonNull
+    public BigInteger getNonce() {
         return nonce;
     }
 
-    public void setNonce(Integer nonce) {
+    public void setNonce(@NonNull BigInteger nonce) {
         this.nonce = nonce;
     }
 
+    @NonNull
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(@NonNull String type) {
         this.type = type;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Account account = (Account) o;
-        return Objects.equals(address, account.address) &&
-                Objects.equals(addressInBase58, account.addressInBase58) &&
-                Objects.equals(balance, account.balance) &&
-                Objects.equals(nonce, account.nonce) &&
-                Objects.equals(type, account.type);
+    public Set<String> getTransactionsHashesInString() {
+        return transactionsHashesInString;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(address, addressInBase58, balance, nonce, type);
+    public void setTransactionsHashesInString(Set<String> transactionsHashesInString) {
+        this.transactionsHashesInString = transactionsHashesInString;
+    }
+
+    public Block getBlock() {
+        return block;
+    }
+
+    public void setBlock(Block block) {
+        this.block = block;
     }
 }

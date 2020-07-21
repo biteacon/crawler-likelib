@@ -7,3 +7,5 @@ spring:
   flyway:
     encoding: UTF-8
     baseline-on-migrate: true
+    schemas:
+      -likelib

@@ -1,125 +1,132 @@
 package com.hackathon.crawler.data.entities;
 
+import org.springframework.lang.NonNull;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
 @Entity
-@Table(name = "blocks")
+@Table(name = "blocks", schema = "likelib")
 public class Block {
 
     @Id
     @Column
-    private Long number;
+    @NonNull
+    private Long height;
+
+    @OneToOne
+    @JoinColumn(name = "coinbase")
+    @NonNull
+    private Account coinbase;
+    @Transient
+    private String coinbaseString;
 
     @Column
+    @NonNull
     private String hash;
 
-    @Column(name = "hash_in_base64")
-    private String hashInBase64;
-
     @Column
+    @NonNull
     private LocalDateTime timestamp;
 
     @Column
-    private Integer nonce;
+    @NonNull
+    private BigInteger nonce;
 
     @Column(name = "prev_block_hash")
+    @NonNull
     private String prevBlockHash;
 
-    @Column(name = "prev_block_hash_in_base64")
-    private String prevBlockHashInBase64;
-
     @OneToMany(mappedBy = "block", fetch = FetchType.LAZY)
-    private List<Transaction> transactionList;
+    private Set<Transaction> transactionList;
+    @Transient
+    private String transactionsInJSON;
 
-    public Long getNumber() {
-        return number;
+    @NonNull
+    public Long getHeight() {
+        return height;
     }
 
-    public void setNumber(Long number) {
-        this.number = number;
+    public void setHeight(@NonNull Long height) {
+        this.height = height;
     }
 
+    @NonNull
+    public Account getCoinbase() {
+        return coinbase;
+    }
+
+    public void setCoinbase(@NonNull Account coinbase) {
+        this.coinbase = coinbase;
+    }
+
+    @NonNull
     public String getHash() {
         return hash;
     }
 
-    public void setHash(String hash) {
+    public void setHash(@NonNull String hash) {
         this.hash = hash;
     }
 
-    public String getHashInBase64() {
-        return hashInBase64;
-    }
-
-    public void setHashInBase64(String hashInBase64) {
-        this.hashInBase64 = hashInBase64;
-    }
-
+    @NonNull
     public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(@NonNull LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
-    public Integer getNonce() {
+    @NonNull
+    public BigInteger getNonce() {
         return nonce;
     }
 
-    public void setNonce(Integer nonce) {
+    public void setNonce(@NonNull BigInteger nonce) {
         this.nonce = nonce;
     }
 
+    @NonNull
     public String getPrevBlockHash() {
         return prevBlockHash;
     }
 
-    public void setPrevBlockHash(String prevBlockHash) {
+    public void setPrevBlockHash(@NonNull String prevBlockHash) {
         this.prevBlockHash = prevBlockHash;
     }
 
-    public String getPrevBlockHashInBase64() {
-        return prevBlockHashInBase64;
-    }
-
-    public void setPrevBlockHashInBase64(String prevBlockHashInBase64) {
-        this.prevBlockHashInBase64 = prevBlockHashInBase64;
-    }
-
-    public List<Transaction> getTransactionList() {
+    public Set<Transaction> getTransactionList() {
         return transactionList;
     }
 
-    public void setTransactionList(List<Transaction> transactionList) {
+    public void setTransactionList(Set<Transaction> transactionList) {
         this.transactionList = transactionList;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Block block = (Block) o;
-        return Objects.equals(number, block.number) &&
-                Objects.equals(hash, block.hash) &&
-                Objects.equals(hashInBase64, block.hashInBase64) &&
-                Objects.equals(timestamp, block.timestamp) &&
-                Objects.equals(nonce, block.nonce) &&
-                Objects.equals(prevBlockHash, block.prevBlockHash) &&
-                Objects.equals(prevBlockHashInBase64, block.prevBlockHashInBase64) &&
-                Objects.equals(transactionList, block.transactionList);
+    public String getTransactionsInJSON() {
+        return transactionsInJSON;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(number, hash, hashInBase64, timestamp, nonce, prevBlockHash, prevBlockHashInBase64, transactionList);
+    public void setTransactionsInJSON(String transactionsInJSON) {
+        this.transactionsInJSON = transactionsInJSON;
+    }
+
+    public String getCoinbaseString() {
+        return coinbaseString;
+    }
+
+    public void setCoinbaseString(String coinbaseString) {
+        this.coinbaseString = coinbaseString;
     }
 }
