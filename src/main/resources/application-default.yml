@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql:indexed_likelib
+    url: jdbc:postgresql://localhost:5433/q_main_db
     username: postgres
     password: postgres
 

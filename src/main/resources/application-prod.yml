@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql:block_info_db
+    url: jdbc:postgresql://localhost:5433/q_main_db
     username: postgres
     password: postgres
 
   flyway:
     encoding: UTF-8
-    baseline-on-migrate: false
+    enabled: false
