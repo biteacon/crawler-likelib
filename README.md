@@ -25,3 +25,8 @@ fullnode не позволяет по http получить многие нео�
 * `docker build -t crawler-likelib:v1 .`
 * `docker run -it -d --network="host" crawler-likelib:v1`
 
+## License
+
+MIT License
+
+A short and simple permissive license with conditions only requiring preservation of copyright and license notices. Licensed works, modifications, and larger works may be distributed under different terms and without source code.
