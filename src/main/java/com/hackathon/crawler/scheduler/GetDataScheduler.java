@@ -13,7 +13,7 @@ public class GetDataScheduler {
         this.processor = processor;
     }
 
-    @Scheduled(fixedDelayString = "${crawler.sync-time}")
+    @Scheduled(fixedDelayString = "${crawler.sync-time}", initialDelay = 10000)
     public void callDownloader() {
         processor.doScript();
     }

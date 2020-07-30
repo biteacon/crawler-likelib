@@ -10,6 +10,7 @@ import com.hackathon.crawler.data.entities.Transaction;
 import com.hackathon.crawler.data.repository.AccountRepository;
 import com.hackathon.crawler.data.repository.BlockRepository;
 import com.hackathon.crawler.data.repository.TransactionRepository;
+import com.hackathon.crawler.processor.cache.TransactionCache;
 import com.hackathon.crawler.processor.exceptions.ErrorCode;
 import com.hackathon.crawler.processor.exceptions.ProcessException;
 import org.springframework.stereotype.Service;

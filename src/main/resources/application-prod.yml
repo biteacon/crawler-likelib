@@ -1,8 +1,10 @@
+crawler:
+  path-to-cache: /opt/tx_cache
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/q_main_db
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://changeme:xxxx/change_db
+    username: changeme
+    password: changeme
 
   flyway:
     encoding: UTF-8

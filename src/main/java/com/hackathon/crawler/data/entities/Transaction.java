@@ -10,12 +10,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
 @Table(name = "transactions", schema = "likelib")
-public class Transaction {
+public class Transaction implements Serializable {
 
     @Id
     @Column

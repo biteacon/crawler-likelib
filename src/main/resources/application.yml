@@ -1,6 +1,6 @@
 crawler:
   host: http://86.57.193.146:50052
-  sync-time: 30000
+  sync-time: 120000
 
 spring:
   main:

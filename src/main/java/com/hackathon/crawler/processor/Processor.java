@@ -1,6 +1,10 @@
 package com.hackathon.crawler.processor;
 
+import com.hackathon.crawler.data.entities.Transaction;
 import com.hackathon.crawler.data.repository.BlockRepository;
+import com.hackathon.crawler.processor.cache.CacheTxFilesHandler;
+import com.hackathon.crawler.processor.cache.TransactionCache;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -12,19 +16,24 @@ public class Processor {
     private final DataReceiver dataReceiver;
     private final DataBuilder dataBuilder;
     private final Statistic statistic;
+    private final TransactionCache transactionCache;
+    private final CacheTxFilesHandler cacheTxFilesHandler;
 
     public Processor(BlockRepository blockRepository,
                      DataReceiver dataReceiver,
                      DataBuilder dataBuilder,
-                     Statistic statistic) {
+                     Statistic statistic,
+                     TransactionCache transactionCache,
+                     CacheTxFilesHandler cacheTxFilesHandler) {
         this.blockRepository = blockRepository;
         this.dataReceiver = dataReceiver;
         this.dataBuilder = dataBuilder;
         this.statistic = statistic;
+        this.transactionCache = transactionCache;
+        this.cacheTxFilesHandler = cacheTxFilesHandler;
     }
 
     public void doScript() {
-
         Long topHeightBlockInDb = checkNumberOfLastBlockInDB();
         Long topBlockHeight = dataReceiver.getTopBlocHeight();
         String topBlockHash = dataReceiver.getTopBlockHash();
@@ -42,6 +51,7 @@ public class Processor {
                 }
                 nextBlockInJSON = dataBuilder.buildBlock(nextBlockInJSON, false, topBlockHash);
             }
+            cacheTxFilesHandler.writeCacheInFile(transactionCache.getCacheInBytes());
             long finishSessionTime = System.currentTimeMillis();
             System.out.println("--------------------------------------------------------------------------------------------------------------");
             System.out.println(statistic.toString(startSessionTime, finishSessionTime));

@@ -8,8 +8,6 @@ COPY . /opt/
 
 RUN mvn package -DskipTests
 
-#FROM adoptopenjdk/openjdk11-openj9:jdk-11.0.1.13-alpine-slim as run
-
 FROM openjdk:11-jdk-slim
 
 COPY --from=build /opt/target/crawler-*.jar /opt/app.jar
